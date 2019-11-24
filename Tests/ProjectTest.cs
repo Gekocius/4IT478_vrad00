@@ -1,9 +1,9 @@
 using System;
+using System.Collections.ObjectModel;
 using System.IO;
 using NUnit.Framework;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
-using OpenQA.Selenium.Interactions;
 using OpenQA.Selenium.Support.UI;
 
 namespace VSE.Rukovoditel.Tests
@@ -39,6 +39,9 @@ namespace VSE.Rukovoditel.Tests
             userNameField.SendKeys(username);
             passwordField.SendKeys(password);
             loginButton.Click();
+            
+            var webDriverWait = new WebDriverWait(driver, TimeSpan.FromSeconds(1));
+            webDriverWait.Until(driver => driver.FindElement(By.CssSelector("img.user-photo-header")).Displayed);
         }
 
         private void LoadTestData()
@@ -58,48 +61,91 @@ namespace VSE.Rukovoditel.Tests
             IWebElement projectsButton = driver.FindElement(By.CssSelector("ul.page-sidebar-menu > li:nth-child(4)"));
             projectsButton.Click();
 
+            var webDriverWait = new WebDriverWait(driver, TimeSpan.FromSeconds(2));
+            //Looking for "Add Project" button
+            webDriverWait.Until(driver => driver.FindElement(By.CssSelector("div.entitly-listing-buttons-left > button")).Displayed);
+
             //WHEN
             IWebElement newProjectButton = driver.FindElement(By.CssSelector("div.entitly-listing-buttons-left > button"));
             newProjectButton.Click();
 
-            var webDriverWaitModal = new WebDriverWait(driver, TimeSpan.FromSeconds(2));
-            webDriverWaitModal.Until(driver => driver.FindElement(By.Id("ajax-modal")).Displayed);
+            webDriverWait.Until(driver => driver.FindElement(By.Id("ajax-modal")).Displayed);
 
             IWebElement saveProjectButton = driver.FindElement(By.CssSelector("button.btn.btn-primary.btn-primary-modal-action"));
             saveProjectButton.Click();
 
             //THEN
-            var webDriverWaitError = new WebDriverWait(driver, TimeSpan.FromSeconds(2));
-            webDriverWaitError.Until(driver => driver.FindElement(By.Id("form-error-container")).Displayed);
+            webDriverWait.Until(driver => driver.FindElement(By.Id("form-error-container")).Displayed);
 
         }
 
-        public void Given_IsOnProjects_When_TryToSaveProjectWithValidInputs_Then_ProjectAppearsInGrid()
+        [Test]
+        public void Given_IsOnProjects_When_TryToSaveProjectWithValidInputs_Then_IsOnTasksView()
         {
             //GIVEN
             LoginToRukovoditel();
             IWebElement projectsButton = driver.FindElement(By.CssSelector("ul.page-sidebar-menu > li:nth-child(4)"));
             projectsButton.Click();
+            
+            var webDriverWait = new WebDriverWait(driver, TimeSpan.FromSeconds(2));
+            //Looking for "Add Project" button
+            webDriverWait.Until(driver => driver.FindElement(By.CssSelector("div.entitly-listing-buttons-left > button")).Displayed);
 
             //WHEN
             string projectId = $"vrad00{new Guid().ToString()}";
+            string date = $"{DateTime.Now.Year}-{DateTime.Now.Month}-{DateTime.Now.Day}";
 
             IWebElement newProjectButton = driver.FindElement(By.CssSelector("div.entitly-listing-buttons-left > button"));
             newProjectButton.Click();
 
-            var webDriverWaitModal = new WebDriverWait(driver, TimeSpan.FromSeconds(2));
-            webDriverWaitModal.Until(driver => driver.FindElement(By.Id("ajax-modal")).Displayed);
+            webDriverWait.Until(driver => driver.FindElement(By.Id("ajax-modal")).Displayed);
 
-            IWebElement projectNameInput;
-            IWebElement projectStatusInput;
-            IWebElement projectPriorityInput;
+            SelectElement projectPrioritySelect = new SelectElement(driver.FindElementById("fields_156"));
+            projectPrioritySelect.SelectByValue("35");
+
+            SelectElement projectStatusSelect = new SelectElement(driver.FindElementById("fields_157"));
+            projectStatusSelect.SelectByValue("37");
+
+            IWebElement projectNameInput = driver.FindElementById("fields_158");
+            projectNameInput.SendKeys(projectId);
+
+            IWebElement projectStartDateInput = driver.FindElementById("fields_159");
+            projectStartDateInput.SendKeys(date);
 
             IWebElement saveProjectButton = driver.FindElement(By.CssSelector("button.btn.btn-primary.btn-primary-modal-action"));
             saveProjectButton.Click();
+
+            //THEN
+            webDriverWait.Until(driver => driver.FindElement(By.ClassName("fieldtype_action-th")));
+
+            DeleteProject(projectId);
+
+        }
+
+        private void DeleteProject(string projectId)
+        {
+            IWebElement projectsBreadcrumb =  driver.FindElement(By.CssSelector("ul.page-breadcrumb > li:nth-child(1) > a"));
+            projectsBreadcrumb.Click();
+            //Looking for "Add Project" button
+            var webDriverWait = new WebDriverWait(driver, TimeSpan.FromSeconds(2));
+            webDriverWait.Until(driver => driver.FindElement(By.CssSelector("div.entitly-listing-buttons-left > button")));
+            ReadOnlyCollection<IWebElement> projects = driver.FindElements(By.CssSelector("#entity_items_listing66_21 table > tbody > tr"));
+
+            foreach (var webElement in projects)
+            {
+                if (webElement.FindElement(By.ClassName("field-158-td")).Text == projectId)
+                {
+                    //Delete button
+                    webElement.FindElement(By.CssSelector(".fieldtype_action > a:nth-child(1)")).Click();
+                    webDriverWait.Until(driver => driver.FindElement(By.Id("ajax-modal")));
+                    //Confirm delete button
+                    driver.FindElement(By.CssSelector("#delete_item_form > div.modal-footer > button[type=submit]")).Click();
+                }                
+            }
         }
 
         [TearDown]
-        private void TearDown()
+        public void TearDown()
         {
             driver.Quit();
         }
