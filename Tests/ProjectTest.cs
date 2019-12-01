@@ -80,7 +80,7 @@ namespace VSE.Rukovoditel.Tests
         }
 
         [Test]
-        public void Given_IsOnProjects_When_TryToSaveProjectWithValidInputs_Then_IsOnTasksView()
+        public void Given_IsOnProjects_When_TryToSaveProjectWithValidInputs_Then_NewProjectIsInTable()
         {
             //GIVEN
             LoginToRukovoditel();
@@ -117,24 +117,26 @@ namespace VSE.Rukovoditel.Tests
 
             //THEN
             webDriverWait.Until(driver => driver.FindElement(By.ClassName("fieldtype_action-th")));
-
-            DeleteProject(projectId);
+            FindAndDeleteProject(projectId);
 
         }
 
-        private void DeleteProject(string projectId)
+        private void FindAndDeleteProject(string projectId)
         {
+            //Starting on Tasks view
             IWebElement projectsBreadcrumb =  driver.FindElement(By.CssSelector("ul.page-breadcrumb > li:nth-child(1) > a"));
             projectsBreadcrumb.Click();
             //Looking for "Add Project" button
             var webDriverWait = new WebDriverWait(driver, TimeSpan.FromSeconds(2));
             webDriverWait.Until(driver => driver.FindElement(By.CssSelector("div.entitly-listing-buttons-left > button")));
             ReadOnlyCollection<IWebElement> projects = driver.FindElements(By.CssSelector("#entity_items_listing66_21 table > tbody > tr"));
-
+            bool projectFoundInTable = false;
             foreach (var webElement in projects)
             {
                 if (webElement.FindElement(By.ClassName("field-158-td")).Text == projectId)
                 {
+                    //Confirm that we have found the project
+                    projectFoundInTable = true;
                     //Delete button
                     webElement.FindElement(By.CssSelector(".fieldtype_action > a:nth-child(1)")).Click();
                     webDriverWait.Until(driver => driver.FindElement(By.Id("ajax-modal")));
@@ -142,6 +144,7 @@ namespace VSE.Rukovoditel.Tests
                     driver.FindElement(By.CssSelector("#delete_item_form > div.modal-footer > button[type=submit]")).Click();
                 }                
             }
+            Assert.That(projectFoundInTable, Is.True);
         }
 
         [TearDown]
