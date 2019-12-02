@@ -92,7 +92,7 @@ namespace VSE.Rukovoditel.Tests
             webDriverWait.Until(driver => driver.FindElement(By.CssSelector("div.entitly-listing-buttons-left > button")).Displayed);
 
             //WHEN
-            string projectId = $"vrad00{new Guid().ToString()}";
+            string projectId = $"vrad00{Guid.NewGuid().ToString()}";
             string date = $"{DateTime.Now.Year}-{DateTime.Now.Month}-{DateTime.Now.Day}";
 
             IWebElement newProjectButton = driver.FindElement(By.CssSelector("div.entitly-listing-buttons-left > button"));
@@ -128,7 +128,7 @@ namespace VSE.Rukovoditel.Tests
             projectsBreadcrumb.Click();
             //Looking for "Add Project" button
             var webDriverWait = new WebDriverWait(driver, TimeSpan.FromSeconds(2));
-            webDriverWait.Until(driver => driver.FindElement(By.CssSelector("div.entitly-listing-buttons-left > button")));
+            webDriverWait.Until(driver => driver.FindElement(By.CssSelector("#entity_items_listing66_21 table > tbody > tr")));
             ReadOnlyCollection<IWebElement> projects = driver.FindElements(By.CssSelector("#entity_items_listing66_21 table > tbody > tr"));
             bool projectFoundInTable = false;
             foreach (var webElement in projects)
@@ -139,9 +139,9 @@ namespace VSE.Rukovoditel.Tests
                     projectFoundInTable = true;
                     //Delete button
                     webElement.FindElement(By.CssSelector(".fieldtype_action > a:nth-child(1)")).Click();
-                    webDriverWait.Until(driver => driver.FindElement(By.Id("ajax-modal")));
+                    webDriverWait.Until(driver => driver.FindElement(By.Id("ajax-modal")).Displayed);
                     //Confirm delete button
-                    driver.FindElement(By.CssSelector("#delete_item_form > div.modal-footer > button[type=submit]")).Click();
+                    driver.FindElement(By.CssSelector("button.btn.btn-primary.btn-primary-modal-action")).Click();
                 }                
             }
             Assert.That(projectFoundInTable, Is.True);

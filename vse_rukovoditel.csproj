@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -13,5 +13,9 @@
     <PackageReference Include="Selenium.Support" Version="3.141.0" />
     <PackageReference Include="Selenium.WebDriver" Version="3.141.0" />
   </ItemGroup>
+
+  <Target Name="MoveChromeDriver" AfterTargets="Build">
+    <Copy SourceFiles="$(ProjectDir)chromedriver_win32\chromedriver.exe" DestinationFolder="$(OutDir)" />
+  </Target>
 
 </Project>
